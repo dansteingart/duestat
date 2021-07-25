@@ -103,8 +103,7 @@ This mode is set by
 where `target` is in volts (where `V_target = I_target*R_fix`) and `DAC_set` is the DAC setting in volts.
 
 ## Control method
-
-The duestat goal seeks via PID, using the arduino [AutoPID](https://github.com/r-downing/AutoPID) by Ryan Downing. When we set `target`, in each case above the `actual` is compared and `kp`,`ki` and `kd` set the nature of the response. Details [here](https://www.csimn.com/CSI_pages/PIDforDummies.html). For now play with the values to get a sense of what they do. `tts` is the update period in arduino loop cycles.
+The duestat goal seeks via PID, using the arduino [AutoPID](https://r-downing.github.io/AutoPID/) by Ryan Downing. When we set `target`, in each case above the `actual` is compared and `kp`,`ki` and `kd` set the nature of the response. Details [here](https://www.csimn.com/CSI_pages/PIDforDummies.html). For now play with the values to get a sense of what they do. `tts` is the update period in arduino loop cycles.
 
 ```
 pid = {
