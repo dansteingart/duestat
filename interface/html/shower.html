@@ -1,0 +1,228 @@
+<head>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/static/p5.min.js"></script>
+	<script src="/static/jquery-3.4.1.min.js"></script>
+
+	<style>
+			body{ margin:0 0 0 0; background: black;}
+	</style>
+
+</head>
+
+<body>
+
+	<div id="chart"></div>
+
+<script>
+
+
+  nd = false
+	da = "";
+	var socket = io();
+	socket.on('news', function (data) {
+		da = data
+		nd = true
+
+	});
+
+	tick = 0
+	start = 0
+	end = 0
+	range = 20000
+
+	x_o = 0
+	y_o = 0
+	x_o1 = 0
+	y_o1 = 0
+	y_o2 = 0
+	y_o3 = 0
+
+	val = 2000;
+		function GND(val)
+		{
+			$.post('/setting/',{'a1':val},function(r){console.log(r)});
+		}
+
+    function setup()
+    {
+				var canvas = createCanvas(windowWidth,windowHeight*.9);
+        canvas.parent('chart');
+        background(0);
+				GND(val);
+		}
+
+	function keyPressed()
+	{
+		console.log(keyCode);
+		if (keyCode == 38)
+		{
+			val = val + 500;
+			if (val > 3500) val = 3500;
+			GND(val);
+		}
+		else if (keyCode == 40)
+		{
+			val = val - 500
+			if (val < 0) val = 0;
+			GND(val);
+		}
+
+		else if (keyCode == 48)
+		{
+			val = 0
+			GND(val);
+		}
+		else if (keyCode == 49)
+		{
+			val = 3500
+			GND(val);
+		}
+
+		else if (keyCode == 50)
+		{
+			val = 1986
+			GND(val);
+		}
+
+
+
+
+	}
+
+
+		function draw()
+	{
+		lower = -3.4
+		upper = 3.4
+		if (nd) //if data is new
+		{
+			fill(0) //black out breathing bar
+			stroke(0) //blank
+			rect(0, 0, windowWidth*.32, 80);
+			//rect(0, windowHeight*.45, windowWidth*.32, 20);
+
+			//set time for waveform
+			tick = da[0]
+			if (start == 0)
+			{
+				start = da[0]
+				end = start + range
+			}
+
+			I = (da[2]-da[3])
+
+			//map V1
+			rr = 0
+			y = map(da[2]-rr,lower,upper,windowHeight*.6,windowHeight*0+80)
+			x = map(tick,start,end,0,windowWidth*.6)
+
+			stroke(255,0,0);
+			fill(255)
+			line(x_o,y_o,x,y)
+			//rect(x,y,1,1)
+
+			y00 = map(da[2]-rr,lower,upper,0,windowWidth*.3)
+			stroke(255,0,0);
+			fill(255,0,0);
+			rect(0, windowHeight*0, y00, 20);
+
+
+			//map V2
+			y1 = map(da[3]-rr,lower,upper,windowHeight*.6,windowHeight*0+80)
+			stroke(255,255,0);
+			fill(255)
+			line(x_o,y_o1,x,y1)
+			//rect(x,y1,1,1)
+
+			//map VR
+			y3 = map(da[5]-rr,lower,upper,windowHeight*.6,windowHeight*0+80)
+			stroke(0,255,100);
+			fill(255)
+			line(x_o,y_o3,x,y3)
+			//rect(x,y1,1,1)
+
+			y11 = map(da[3]-rr,lower,upper,0,windowWidth*.3)
+			stroke(255,255,0);
+			fill(255,255,0);
+			rect(0, windowHeight*.0 + 30, y11, 20);
+
+			//map I
+			y2 = map(I,-3,3,windowHeight*.9,windowHeight*.65)
+			stroke(0,100,255);
+			fill(255)
+			line(x_o,y_o2,x,y2)
+			//rect(x,y1,1,1)
+
+			y22 = map(I,-3,3,0,windowWidth*.3)
+			stroke(0,110,255);
+			fill(0,110,255);
+			rect(0, windowHeight*.0 + 60, y22, 20);
+
+
+			nd = false;
+			x_o = x
+			y_o = y
+			y_o1 = y1
+			y_o2 = y2
+			y_o2 = y2
+			y_o3 = y3
+
+
+			if (tick > end)
+			{
+				start = da[0]
+				end = start + range
+				clear()
+				background(0);
+				x_o = 0;
+				y_o = y;
+				y_o1 = y1;
+			}
+
+			fill(0)
+			stroke(0)
+			rect(windowWidth*.6,0,windowWidth,windowHeight)
+
+			fill(255)
+			stroke(0)
+			textSize(40);
+
+			textAlign(LEFT)
+			text(`V1 :` , windowWidth*.65, windowHeight*.25);
+			text(`V2 :` , windowWidth*.65, windowHeight*.35);
+			text(`VR :` , windowWidth*.65, windowHeight*.45);
+			text(`I  :` , windowWidth*.65, windowHeight*.55);
+
+
+			try
+			{
+				ref = da[5].toFixed(3)
+				textAlign(LEFT)
+				fill(255,0,0)
+				text(`${da[2].toFixed(3)-rr} V`, windowWidth*.8,windowHeight*.25)
+				fill(255,255,0)
+				text(`${da[3].toFixed(3)-rr} V`, windowWidth*.8,windowHeight*.35)
+				fill(0,100,255)
+				text(`${I.toFixed(3)} mA`, windowWidth*.8,windowHeight*.55)
+				fill(0,255,100)
+				text(`${da[5].toFixed(3)-rr} V`, windowWidth*.8,windowHeight*.45)
+			}
+			catch (e)
+			{
+				console.log(e);
+			}
+
+
+
+			}
+	}
+
+
+
+
+
+
+</script>
+
+
+</body>

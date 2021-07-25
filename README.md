@@ -1,91 +1,120 @@
-# open Respiratory Profile Monitor
+# duestat
 ---
 
 ## Overview
-This is (very much a work in progress) to create a simple system to measure
+A long time ago I made the [ardustat](http://github.com/dansteingart/ardustat). This device used a simple closed loop control circuit and few DACS, resistors, and ADCS to do electrochemical experiments with an arduino. It worked pretty well, but in 2006
 
-- Differential Pressure
-- Absolute Pressure
-- CO2 Content
+1. I was young and overambitious and it had some features that traded bandwidth for accuracy in a way I know consider unacceptable (e.g. it used a digital potentiometer to set and measure current, which is not the best)
+2. It was primarily for battery cycling, and in the coming decade I got to know the just-good-enough performance that is Neware
+3. The initial interface was written in Java, which I now hate. 
 
+After I graduated and got a faculty position a few students improved the C code, but the interface and circuit design languished. I was hopeful that the nonolith CEE (now the ADALM1000) would obviate the hardware entirely. While I would gladly welcome that event, it seems to not be a priority for ADI. There have been a bunch of open source potentiostats as BS/MS projects over the last decade, but, to be honest, the part count and not-using-proto-hardware (e.g. not using arduino like things) are a turn off.
 
-with a bunch of math and analysis on the backend to display
+So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not as accesible as it should be. But! The new era of arduinos and its successors have SAMD51 M4's for like $20, and this means
 
-- Respiratory Rate
-- Tidal Flow Rate
-- End Tidal CO2
+1. ADC resolution has gone to 14 bits! 👍
+2. There's now a few built-in 12 bit DACS! 👍
+3. Bus potential knocked down to 3.3 V 👎, but well, we can do some tricks and if we stick to half cells that should be OK until we need to do cathode work.....
 
-Given the chaos and lack of preparedness we are now experiencing as part of COVID19 2020, the design goals of this project are
+The initial part count of the ardustat can be knocked down, since we're not going to use an off-board DAC and we're going to avoid relays for now. With something like an adafruit M4 class board, a resistor, and some patch cable we can likely do something. So let's see how it goes.
 
-1. To use open source software so anyone can implement this
-2. Use open source (when available) and readily available hardware
-
-So these tools can be deployed quickly and easily
-
-A current _non goal_ is extensiblity. The pieces here are intended to be lightweight and easy to read so they can be modified as need, but we are not imposing a strong framework or opinions on how this should be done.
-
-Again, this is very much a work in progress. The total system design can be tracked [here]()
-
-
-## Server Actions/Architecture:
-Upon running the server (instructions below), the server correctly sets up the following tracks in parallel using node's inherent asynchronous nature.
-
-The first track involves taking data from the serialport and processing it in a useful way. The server currently
-- Connects to the serial port on launch
-- Listens continuously for messages
-- Parses messages on "\n"
-  - It will covert voltage data to flow and pressure data (currently on sends voltage data)
-- Immediately fires this data to a `socket.io` stream for external display/processing
-- Stores `time`, `V1`, and `V2` in length limited arrays (user defined length)
-- Every N seconds, currently 10, the code saves a timestamped CSV with data collected in that interval
-- In theory the python code can be implemented directly here since peterkinget's code is not dependent on any fancy packages.
-
-The second track is a simple HTML server that
-- serves the viewer over http on port `3000`
-- enables the viewing HTML code to tap into the `socket.io` stream.
-
-(below is being implemented now)
-The third track is a series of timers that
-- looks for data thresholds to alarm (set by user)
-- sends an audio signal via the RPI headphone jack on alarm
-- sends a separate stream of data to the viewer via `socket.io`
-
-
-
-## Running the Node Server
-
-This is intended to run on a raspberry pi class computer, which means it can run on any computer. We're using nodejs v > 12 for this.
-
-### On First Run
-cd into this directory and run
+## Circuit Theory
+The duestat, like the ardustat before it, is close loop control circuit based on a simple voltage divider circuit below
 
 ```
-bash first_run.sh
+
+DAC_set ---|                    ->  A0 (set), A3 (read)
+           |
+           Rfix                 
+           |
+           |------- ADC_cell    ->  A2 (read)
+           |
+           Cell
+           |
+DAC_gnd ---|                    ->  A1 (set), A4 (read)
+
+
+ADC_ref                         -> A5
+
 ```
-This will install the required node.js modules
 
-### Every Time
+In the `duestat.ino` code most of the action happens at `DAC_set`, regardless what we're trying to do. For example:
 
-Just type
+### OCV
+We set `DAC_set` to `INPUT`, ideally making current flow between `Cell` and everything zero. We say ideally because even in `INPUT` the resistance isn't infinite, but order ~10M ohm. We may just need to use a relay later. For now I think it's start. 
+
+OCV is set via the `JSON` command
+
 ```
-node server.js SERIAL_PORT
+{'mode':'ocv'}
 ```
-This will start a server that scoops up the serial data and fires it off to https://localhost:3000
+
+### Potentiostat vs. DAC_gnd
+In a two electrode electrochemical cell the goal of a potentiostatic hold (e.g. constant voltage) is to, well, set a constant voltage. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `DAC_gnd` is equal to the desired value. 
+
+Note that both `DAC_set` and `DAC_gnd` can be anything between 0 V and 3.3 V on a 12 bit basis (0 to 4095 counts). So we can target `ADC_cell` < 0 if we set `DAC_gnd` above `DAC_set`. The code does not goal seek `DAC_gnd` but rather has the user set the relative range. For example for an effective range of -1.65 V to 1.65 V vs. GND `DAC_gnd` should be set to ~2000.
+
+The current for the systems is calculated by (`DAC_set`-`ADC_cell`)/`Rfix`.
+
+This potentiostat mode is invoked by physically tying `A5` to `A4` and setting via the `JSON` command
+
+```
+{
+    'mode':'pstat',
+    'target':1.8,
+    'a1' : 0
+}
+
+```
+where `target` is in volts and `a1` is the DAC setting in bits. Yes, it's awful.
 
 
-## Running The Arduino Code
-This is in hardware, this runs an infinite loop of specified time to fire oversampled analog readings through the serial port. This code expects an SAMD51 class arduino. This is an adafruit metro M4, feather M4, or any number of arduinos that sport this chip.
+### Potentiostat vs. ADC_ref
+In a three electrode electrochemical cell the goal of a potentiostatic hold is to, well, set the voltage of the working electrode (i.e. `A2` @ `ADC_cell`) against a reference (`A5` @ `ADC_ref`), where `DAC_gnd` is the counter electrode. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `ADC_ref` is equal to the desired value. 
 
-For the current implementation of our RPM circuit this chip is required because of its stable on chip DAC, which we use to set a reference voltage for the AD620 opamps we use to amplify our NXP MPX10 pressure transducers.
+The same suggestions for `DAC_gnd` as above hold.
 
-To correctly upload this code via the [arduino ide](https://arduino.cc) you will need to, one time, install the proper libraries for the SAMD51. Google it for now. I'll add language on how to do this later. Adafruit has a nice guide.
+Again, the current for the systems is calculated by (`DAC_set`-`ADC_cell`)/`Rfix`.
 
-CO2 functionality forthcoming.
+This potentiostat mode is invoked setting via the `JSON` command
 
-## Contributors
-- [Gerard Ateshian]()
-- [Peter Kinget]()
-- [Aaron Kyle]()
-- [Vijay Modi]()
-- [Bob Stark]()
-- [Dan Steingart]()
+```
+{
+    'mode':'pstat',
+    'target':1.8,
+    'a1' : 0
+}
+
+```
+where `target` is in volts and `a1` is the DAC setting in bits. Yes, it's awful.
+
+
+### Galvanostat
+
+In our constant current mode, we goal set given value as (`DAC_set`-`ADC_cell`)/`Rfix` and measure `ADC_cell`-`DAC_gnd` and/or `ADC_cell`-`ADC_ref`
+
+This mode is set by
+
+{
+    'mode':'gstat',
+    'target': 0.0,
+    'a1' : 0
+
+}
+
+where `target` is in volts (where `V_target = I_target*R_fix`) and `a1` is the DAC setting in bits. Yes, it's awful.
+
+## Control Attempt
+
+The code attempts to control the above via PID.
+
+```
+pid = {
+    'setpid':True,
+    'kp':10,
+    'ki':8,
+    'kd':8,
+    'tts':1
+
+    }
+```
