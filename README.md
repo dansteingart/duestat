@@ -4,13 +4,13 @@
 ## Overview
 A long time ago I made the [ardustat](http://github.com/dansteingart/ardustat). This device used a simple closed loop control circuit and few DACS, resistors, and ADCS to do electrochemical experiments with an arduino. It worked pretty well, but in 2006
 
-1. I was young and overambitious and it had some features that traded bandwidth for accuracy in a way I know consider unacceptable (e.g. it used a digital potentiometer to set and measure current, which is not the best)
+1. I was young and overambitious and it had some features that traded bandwidth for accuracy in a way I now consider unacceptable (e.g. it used a digital potentiometer to set and measure current, which is not the best)
 2. It was primarily for battery cycling, and in the coming decade I got to know the just-good-enough performance that is Neware
 3. The initial interface was written in Java, which I now hate. 
 
 After I graduated and got a faculty position a few students improved the C code, but the interface and circuit design languished. I was hopeful that the nonolith CEE (now the ADALM1000) would obviate the hardware entirely. While I would gladly welcome that event, it seems to not be a priority for ADI. There have been a bunch of open source potentiostats as BS/MS projects over the last decade, but, to be honest, the part count and not-using-proto-hardware (e.g. not using arduino like things) are a turn off.
 
-So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not as accesible as it should be. But! The new era of arduinos and its successors have SAMD51 M4's for like $20, and this means
+So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not as accessible as it should be. But! The new era of arduinos and its successors have SAMD51 M4's for like $20, and this means
 
 1. ADC resolution has gone to 14 bits! 👍
 2. There's now a few built-in 12 bit DACS! 👍
@@ -62,11 +62,11 @@ This potentiostat mode is invoked by physically tying `A5` to `A4` and setting v
 {
     'mode':'pstat',
     'target':1.8,
-    'a1' : 0
+    'DAC_set' : .2
 }
 
 ```
-where `target` is in volts and `a1` is the DAC setting in bits. Yes, it's awful.
+where `target` is in volts and `DAC_set` is the DAC setting in volts.
 
 
 ### Potentiostat vs. ADC_ref
@@ -82,12 +82,11 @@ This potentiostat mode is invoked setting via the `JSON` command
 {
     'mode':'pstat',
     'target':1.8,
-    'a1' : 0
+    'DAC_set' : .2
 }
 
 ```
-where `target` is in volts and `a1` is the DAC setting in bits. Yes, it's awful.
-
+where `target` is in volts and `DAC_set` is the DAC setting in volts.
 
 ### Galvanostat
 
@@ -98,15 +97,14 @@ This mode is set by
 {
     'mode':'gstat',
     'target': 0.0,
-    'a1' : 0
-
+    'DAC_set' : .2
 }
 
-where `target` is in volts (where `V_target = I_target*R_fix`) and `a1` is the DAC setting in bits. Yes, it's awful.
+where `target` is in volts (where `V_target = I_target*R_fix`) and `DAC_set` is the DAC setting in volts.
 
-## Control Attempt
+## Control method
 
-The code attempts to control the above via PID.
+The duestat goal seeks via PID, using the arduino [AutoPID](https://github.com/r-downing/AutoPID) by Ryan Downing. When we set `target`, in each case above the `actual` is compared and `kp`,`ki` and `kd` set the nature of the response. Details [here](https://www.csimn.com/CSI_pages/PIDforDummies.html). For now play with the values to get a sense of what they do. `tts` is the update period in arduino loop cycles.
 
 ```
 pid = {
@@ -115,6 +113,5 @@ pid = {
     'ki':8,
     'kd':8,
     'tts':1
-
     }
 ```
