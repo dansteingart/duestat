@@ -32,7 +32,7 @@ double res1 = 1000.0;
 //pstat
 double output = 1;
 double target = 1;
-double VCell;
+double actual;
 int rold = 0;
 
 double KP = 8;
@@ -40,7 +40,7 @@ double KI = 5;
 double KD = 5;
 
 
-AutoPID myPID(&VCell, &target, &output, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
+AutoPID myPID(&actual, &target, &output, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
 
 
 void setup() {
@@ -66,8 +66,15 @@ void loop() {
     DeserializationError error = deserializeJson(doc, inputString);
     //Serial.println(doc.as<String>());
 
-    //a1 = inputString.toInt();
-    if (doc.containsKey("a1"))      a1 = doc["a1"];
+    //DAC_gnd settings
+    if (doc.containsKey("a1"))      a1 = doc["a1"];  //bitwise
+    if (doc.containsKey("DAC_gnd")) a1 = doc["DAC_gnd"]*3.3/4095;  //voltage
+
+    //DAC_set settings for debugging purposes
+    if (doc.containsKey("a0"))      a0 = doc["a0"];  //bitwise
+    if (doc.containsKey("DAC_set")) a0 = doc["DAC_set"]*3.3/4095; //voltage
+
+    //Control mode settings
     if (doc.containsKey("mode"))    mode = doc["mode"].as<String>();
     if (doc.containsKey("rate"))    rate = doc["rate"];
     if (doc.containsKey("amp"))     amp = doc["amp"];
@@ -128,7 +135,7 @@ void loop() {
     Serial.print("\t");
     Serial.print(target);
     Serial.print("\t");
-    Serial.print(VCell);
+    Serial.print(actual);
     //Serial.print(0);
 
     Serial.print("\t");
@@ -158,7 +165,7 @@ void loop() {
   {
     int aa2 = analogRead(A2);
     int aa4 = analogRead(A4);
-    VCell = 3.3 * (aa4 - aa2) / pow(2, 14);
+    actual = 3.3 * (aa4 - aa2) / pow(2, 14);
     pinMode(A0, INPUT);
   }
 
@@ -166,7 +173,7 @@ void loop() {
   {
     int aa2 = analogRead(A2);
     int aa4 = analogRead(A4);
-    VCell = 3.3 * (aa4 - aa2) / pow(2, 14);
+    actual = 3.3 * (aa4 - aa2) / pow(2, 14);
     myPID.run(); //call every loop, updates automatically at certain time interval
     a0 = (int)(4095 * output / 3.3);
     if (a0 < 0) a0 = 0;
@@ -178,7 +185,7 @@ void loop() {
   {
     int aa4 = analogRead(A4);
     int aa3 = analogRead(A3);
-    VCell = 3.3 * (aa3 - aa4) / pow(2, 14);
+    actual = 3.3 * (aa3 - aa4) / pow(2, 14);
     myPID.run(); //call every loop, updates automatically at certain time interval
     a0 = (int)(4095 * output / 3.3);
     if (a0 < 0) a0 = 0;
@@ -187,23 +194,14 @@ void loop() {
   }
 
   
-
-  analogWrite(A1, a1); //write xxx V to refAD620
-
-
 }
 
 
 void serialEvent() {
-  while (Serial.available()) {
-    // get the new byte:
+  while (Serial.available()) 
+  {
     char inChar = (char)Serial.read();
-    // add it to the inputString:
     inputString += inChar;
-    if (inChar == '\n') {
-      stringComplete = true;
-      //      Serial.println(inputString);
-      //      delay(1000);
-    }
+    if (inChar == '\n') {stringComplete = true;}
   }
 }
