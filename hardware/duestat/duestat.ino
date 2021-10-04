@@ -1,8 +1,6 @@
 #include <ArduinoJson.h>
 #include <ArduinoJson.hpp>
 
-// #include <ArduinoJson.h>
-// #include <ArduinoJson.hpp>
 #include <AutoPID.h>
 
 StaticJsonDocument<1000> doc;
@@ -12,12 +10,11 @@ StaticJsonDocument<1000> doc;
 #define OUTPUT_MAX 3.3
 
 String mode = "ocv";
-
 String inputString = "";         // a String to hold incoming data
 bool stringComplete = false;  // whether the string is complete
 int last;
 
-int sample_period = 5000; //send sample at 10000 us
+int sample_period = 10000; //send sample at 10000 us
 int a0 = 0; //set for dacc 
 long a1 = 1986; //set for dac
 long a2 = 0; //running sum
@@ -32,15 +29,15 @@ double res1 = 1000.0;
 //pstat
 double output = 1;
 double target = 1;
-double actual;
+double VCell;
 int rold = 0;
 
 double KP = 8;
 double KI = 5;
 double KD = 5;
 
-
-AutoPID myPID(&actual, &target, &output, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
+//forgot what this was about
+AutoPID myPID(&VCell, &target, &output, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
 
 
 void setup() {
@@ -52,9 +49,7 @@ void setup() {
   myPID.setBangBang(.1);
   myPID.setTimeStep(50);
 
-
 }
-
 
 
 void loop() {
@@ -66,15 +61,8 @@ void loop() {
     DeserializationError error = deserializeJson(doc, inputString);
     //Serial.println(doc.as<String>());
 
-    //DAC_gnd settings
-    if (doc.containsKey("a1"))      a1 = doc["a1"];  //bitwise
-    if (doc.containsKey("DAC_gnd")) a1 = doc["DAC_gnd"]*3.3/4095;  //voltage
-
-    //DAC_set settings for debugging purposes
-    if (doc.containsKey("a0"))      a0 = doc["a0"];  //bitwise
-    if (doc.containsKey("DAC_set")) a0 = doc["DAC_set"]*3.3/4095; //voltage
-
-    //Control mode settings
+    //a1 = inputString.toInt();
+    if (doc.containsKey("a1"))      a1 = doc["a1"];
     if (doc.containsKey("mode"))    mode = doc["mode"].as<String>();
     if (doc.containsKey("rate"))    rate = doc["rate"];
     if (doc.containsKey("amp"))     amp = doc["amp"];
@@ -119,7 +107,6 @@ void loop() {
 
 
     //send packet
-
     Serial.print(last_marker);
     //Serial.print(0);
     Serial.print("\t");
@@ -135,7 +122,7 @@ void loop() {
     Serial.print("\t");
     Serial.print(target);
     Serial.print("\t");
-    Serial.print(actual);
+    Serial.print(VCell);
     //Serial.print(0);
 
     Serial.print("\t");
@@ -165,7 +152,7 @@ void loop() {
   {
     int aa2 = analogRead(A2);
     int aa4 = analogRead(A4);
-    actual = 3.3 * (aa4 - aa2) / pow(2, 14);
+    VCell = 3.3 * (aa4 - aa2) / pow(2, 14);
     pinMode(A0, INPUT);
   }
 
@@ -173,7 +160,7 @@ void loop() {
   {
     int aa2 = analogRead(A2);
     int aa4 = analogRead(A4);
-    actual = 3.3 * (aa4 - aa2) / pow(2, 14);
+    VCell = 3.3 * (aa4 - aa2) / pow(2, 14);
     myPID.run(); //call every loop, updates automatically at certain time interval
     a0 = (int)(4095 * output / 3.3);
     if (a0 < 0) a0 = 0;
@@ -185,7 +172,7 @@ void loop() {
   {
     int aa4 = analogRead(A4);
     int aa3 = analogRead(A3);
-    actual = 3.3 * (aa3 - aa4) / pow(2, 14);
+    VCell = 3.3 * (aa3 - aa4) / pow(2, 14);
     myPID.run(); //call every loop, updates automatically at certain time interval
     a0 = (int)(4095 * output / 3.3);
     if (a0 < 0) a0 = 0;
@@ -194,14 +181,23 @@ void loop() {
   }
 
   
+
+  analogWrite(A1, a1); //write xxx V to refAD620
+
+
 }
 
 
 void serialEvent() {
-  while (Serial.available()) 
-  {
+  while (Serial.available()) {
+    // get the new byte:
     char inChar = (char)Serial.read();
+    // add it to the inputString:
     inputString += inChar;
-    if (inChar == '\n') {stringComplete = true;}
+    if (inChar == '\n') {
+      stringComplete = true;
+      //      Serial.println(inputString);
+      //      delay(1000);
+    }
   }
 }
