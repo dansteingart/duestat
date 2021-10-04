@@ -19,7 +19,7 @@ So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not
 The initial part count of the ardustat can be knocked down, since we're not going to use an off-board DAC and we're going to avoid relays for now. With something like an adafruit M4 class board, a resistor, and some patch cable we can likely do something. So let's see how it goes.
 
 ## Circuit Theory
-The duestat, like the ardustat before it, is close loop control circuit based on a simple voltage divider circuit below
+The duestat, like the ardustat before it, is closed-loop control circuit based on a simple voltage divider circuit below
 
 ```
 
@@ -50,11 +50,11 @@ OCV is set via the `JSON` command
 ```
 
 ### Potentiostat vs. DAC_gnd
-In a two electrode electrochemical cell the goal of a potentiostatic hold (e.g. constant voltage) is to, well, set a constant voltage. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `DAC_gnd` is equal to the desired value. 
+In a two electrode electrochemical cell the goal of a potentiostatic hold (e.g. constant voltage) is to, well, set a constant voltage. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `DAC_gnd` is equal to the desired value. Just physically tie `A5` to `DAC_GND` to enable this mode.
 
 Note that both `DAC_set` and `DAC_gnd` can be anything between 0 V and 3.3 V on a 12 bit basis (0 to 4095 counts). So we can target `ADC_cell` < 0 if we set `DAC_gnd` above `DAC_set`. The code does not goal seek `DAC_gnd` but rather has the user set the relative range. For example for an effective range of -1.65 V to 1.65 V vs. GND `DAC_gnd` should be set to ~2000.
 
-The current for the systems is calculated by (`DAC_set`-`ADC_cell`)/`Rfix`.
+The current for the system is calculated by (`DAC_set`-`ADC_cell`)/`Rfix`.
 
 This potentiostat mode is invoked by physically tying `A5` to `A4` and setting via the `JSON` command
 
@@ -74,7 +74,7 @@ In a three electrode electrochemical cell the goal of a potentiostatic hold is t
 
 The same suggestions for `DAC_gnd` as above hold.
 
-Again, the current for the systems is calculated by (`DAC_set`-`ADC_cell`)/`Rfix`.
+Again, the current for the system is calculated by (`DAC_set`-`ADC_cell`)/`Rfix`.
 
 This potentiostat mode is invoked setting via the `JSON` command
 
