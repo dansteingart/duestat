@@ -93,16 +93,17 @@ where `target` is in volts and `DAC_set` is the DAC setting in volts.
 In our constant current mode, we goal set given value as (`DAC_set`-`ADC_cell`)/`Rfix` and measure `ADC_cell`-`DAC_gnd` and/or `ADC_cell`-`ADC_ref`
 
 This mode is set by
-
+```
 {
     'mode':'gstat',
     'target': 0.0,
     'DAC_set' : .2
 }
+```
 
 where `target` is in volts (where `V_target = I_target*R_fix`) and `DAC_set` is the DAC setting in volts.
 
-## Control method
+## Control Method
 The duestat goal seeks via PID, using the arduino [AutoPID](https://r-downing.github.io/AutoPID/) by Ryan Downing. When we set `target`, in each case above the `actual` is compared and `kp`,`ki` and `kd` set the nature of the response. Details [here](https://www.csimn.com/CSI_pages/PIDforDummies.html). For now play with the values to get a sense of what they do. `tts` is the update period in arduino loop cycles.
 
 ```
@@ -113,4 +114,15 @@ pid = {
     'kd':8,
     'tts':1
     }
+```
+
+## Simple Plotting Interface
+
+A basic interface is provided for debugging purposes in `interface`, it needs to be documented. 
+
+To use it have node ~16 or greater installed and then 
+
+```
+npm i serialport #to make sure it works
+node server.js /your/duestat/port #COMX , /dev/tty.usbmodemXXXXX, etc
 ```
