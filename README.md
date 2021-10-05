@@ -50,7 +50,7 @@ OCV is set via the `JSON` command
 ```
 
 ### Potentiostat vs. DAC_gnd
-In a two electrode electrochemical cell the goal of a potentiostatic hold (e.g. constant voltage) is to, well, set a constant voltage. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `DAC_gnd` is equal to the desired value. Just physically tie `A5` to `DAC_GND` to enable this mode.
+In a two electrode electrochemical cell the goal of a potentiostatic hold (e.g. constant voltage) is to, well, set a constant voltage. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `DAC_gnd` is equal to the desired value. 
 
 Note that both `DAC_set` and `DAC_gnd` can be anything between 0 V and 3.3 V on a 12 bit basis (0 to 4095 counts). So we can target `ADC_cell` < 0 if we set `DAC_gnd` above `DAC_set`. The code does not goal seek `DAC_gnd` but rather has the user set the relative range. For example for an effective range of -1.65 V to 1.65 V vs. GND `DAC_gnd` should be set to ~2000.
 
@@ -70,7 +70,7 @@ where `target` is in volts and `DAC_set` is the DAC setting in volts.
 
 
 ### Potentiostat vs. ADC_ref
-In a three electrode electrochemical cell the goal of a potentiostatic hold is to, well, set the voltage of the working electrode (i.e. `A2` @ `ADC_cell`) against a reference (`A5` @ `ADC_ref`), where `DAC_gnd` is the counter electrode. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `ADC_ref` is equal to the desired value. 
+In a three electrode electrochemical cell the goal of a potentiostatic hold is to, well, set the voltage of the working electrode (i.e. `A4` @ `ADC_cell`) against a reference (`A5` @ `ADC_ref`), where `DAC_gnd` is the counter electrode. In this scenario the `duestat.ino` code just moves `DAC_set` such that `ADC_cell` - `ADC_ref` is equal to the desired value. 
 
 The same suggestions for `DAC_gnd` as above hold.
 
@@ -80,7 +80,7 @@ This potentiostat mode is invoked setting via the `JSON` command
 
 ```
 {
-    'mode':'pstat',
+    'mode':'pstat_3',
     'target':1.8,
     'DAC_set' : .2
 }
@@ -90,7 +90,7 @@ where `target` is in volts and `DAC_set` is the DAC setting in volts.
 
 ### Galvanostat
 
-In our constant current mode, we goal set given value as (`DAC_set`-`ADC_cell`)/`Rfix` and measure `ADC_cell`-`DAC_gnd` and/or `ADC_cell`-`ADC_ref`
+In our constant current mode, we goal set given value as (`DAC_set`-`ADC_cell`)/`Rfix` and measure `ADC_cell`-`DAC_gnd` and/or `ADC_cell`-`ADC_ref`.
 
 This mode is set by
 ```
@@ -104,25 +104,28 @@ This mode is set by
 where `target` is in volts (where `V_target = I_target*R_fix`) and `DAC_set` is the DAC setting in volts.
 
 ## Control Method
-The duestat goal seeks via PID, using the arduino [AutoPID](https://r-downing.github.io/AutoPID/) by Ryan Downing. When we set `target`, in each case above the `actual` is compared and `kp`,`ki` and `kd` set the nature of the response. Details [here](https://www.csimn.com/CSI_pages/PIDforDummies.html). For now play with the values to get a sense of what they do. `tts` is the update period in arduino loop cycles.
+The duestat goal seeks via `P` without the `I` or `D` right now because, for whatever reason, the [AutoPID](https://r-downing.github.io/AutoPID/) by Ryan Downing is failing me. It was working but now it's not. I can't even. 
 
 ```
 pid = {
     'setpid':True,
-    'kp':10,
-    'ki':8,
-    'kd':8,
-    'tts':1
+    'kp':.1,
     }
 ```
 
-## Simple Plotting Interface
+## Control Server and Simple Plotting Interface
 
 A basic interface is provided for debugging purposes in `interface`, it needs to be documented. 
 
 To use it have node ~16 or greater installed and then 
 
 ```
-npm i serialport #to make sure it works
+bash first_run.sh #to get the mood right
 node server.js /your/duestat/port #COMX , /dev/tty.usbmodemXXXXX, etc
 ```
+You'll see an insane amount of data flowing in the console. You're smart though and know you can just send that to your file of choice by saying:
+
+```
+node server.js /your/duestat/port > out.tsv
+```
+You now have a server going at `http://localhost:3200`. You can  send/get commands from the server via your favorite `REST` doer (I like python requests). See `example_scripts/example.py` for a fairly complete trial/error script.
