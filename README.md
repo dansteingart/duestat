@@ -27,11 +27,11 @@ DAC_set ---|                    ->  A0 (set), A3 (read)
            |
            Rfix                 
            |
-           |------- ADC_cell    ->  A2 (read)
+           |------- ADC_cell    ->  A4 (read)
            |
            Cell
            |
-DAC_gnd ---|                    ->  A1 (set), A4 (read)
+DAC_gnd ---|                    ->  A1 (set), A2 (read)
 
 
 ADC_ref                         -> A5

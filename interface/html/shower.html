@@ -37,18 +37,25 @@
 	y_o2 = 0
 	y_o3 = 0
 
-	val = 2000;
+	pval = 1.65; // V
+	gval = 1.65; // V
 		function GND(val)
 		{
-			$.post('/setting/',{'a1':val},function(r){console.log(r)});
+			$.post('/setting/',{'dac1':val},function(r){console.log(r)});
 		}
+
+		function HIGH(val)
+		{
+			$.post('/setting/',{'dac0':val},function(r){console.log(r)});
+		}
+
 
     function setup()
     {
-				var canvas = createCanvas(windowWidth,windowHeight*.9);
-        canvas.parent('chart');
-        background(0);
-				GND(val);
+			var canvas = createCanvas(windowWidth,windowHeight*.9);
+       		canvas.parent('chart');
+        	background(0);
+			GND(gval);
 		}
 
 	function keyPressed()
@@ -56,33 +63,35 @@
 		console.log(keyCode);
 		if (keyCode == 38)
 		{
-			val = val + 500;
-			if (val > 3500) val = 3500;
-			GND(val);
+			gval = gval + .1;
+			if (gval > 3) gval = 3;
+			GND(gval);
 		}
 		else if (keyCode == 40)
 		{
-			val = val - 500
-			if (val < 0) val = 0;
-			GND(val);
+			gval = gval - .1
+			if (gval < 0) gval = 0;
+			GND(gval);
 		}
 
 		else if (keyCode == 48)
 		{
-			val = 0
-			GND(val);
+			gval = 0
+			GND(gval);
 		}
 		else if (keyCode == 49)
 		{
-			val = 3500
-			GND(val);
+			gval = 3
+			GND(gval);
 		}
 
 		else if (keyCode == 50)
 		{
-			val = 1986
-			GND(val);
+			gval = 3.3/2
+			GND(gval);
 		}
+
+
 
 
 
@@ -109,7 +118,7 @@
 				end = start + range
 			}
 
-			I = (da[2]-da[3])
+			I = ((da[2]-da[3])/da[9])*1000
 
 			//map V1
 			rr = 0
@@ -187,25 +196,37 @@
 			stroke(0)
 			textSize(40);
 
+			textFont("courier");
 			textAlign(LEFT)
-			text(`V1 :` , windowWidth*.65, windowHeight*.25);
-			text(`V2 :` , windowWidth*.65, windowHeight*.35);
-			text(`VR :` , windowWidth*.65, windowHeight*.45);
-			text(`I  :` , windowWidth*.65, windowHeight*.55);
+			text(`DAC0 : ` , windowWidth*.60, windowHeight*.25);
+			text(`Cell : ` , windowWidth*.60, windowHeight*.35);
+			text(`DAC1 : ` , windowWidth*.60, windowHeight*.45);
+			text(`I    : ` , windowWidth*.60, windowHeight*.55);
+
 
 
 			try
 			{
 				ref = da[5].toFixed(3)
+				textAlign(RIGHT)
+				fill(255,0,0)
+				text(`${da[2].toFixed(3)-rr}`, windowWidth*.8,windowHeight*.25)
+				fill(255,255,0)
+				text(`${da[3].toFixed(3)-rr}`, windowWidth*.8,windowHeight*.35)
+				fill(0,100,255)
+				text(`${I.toFixed(3)}`, windowWidth*.8,windowHeight*.55)
+				fill(0,255,100)
+				text(`${da[5].toFixed(3)-rr}`, windowWidth*.8,windowHeight*.45)
+
 				textAlign(LEFT)
 				fill(255,0,0)
-				text(`${da[2].toFixed(3)-rr} V`, windowWidth*.8,windowHeight*.25)
+				text(`V`, windowWidth*.81,windowHeight*.25)
 				fill(255,255,0)
-				text(`${da[3].toFixed(3)-rr} V`, windowWidth*.8,windowHeight*.35)
+				text(`V`, windowWidth*.81,windowHeight*.35)
 				fill(0,100,255)
-				text(`${I.toFixed(3)} mA`, windowWidth*.8,windowHeight*.55)
+				text(`mA`, windowWidth*.81,windowHeight*.55)
 				fill(0,255,100)
-				text(`${da[5].toFixed(3)-rr} V`, windowWidth*.8,windowHeight*.45)
+				text(`V`, windowWidth*.81,windowHeight*.45)
 			}
 			catch (e)
 			{

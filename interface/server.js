@@ -27,9 +27,8 @@ const Readline = require('@serialport/parser-readline')
 const port = new SerialPort(spo)
 const parser = new Readline()
 
-
-header = "time,dt,V1,V2,OS,dts"
-console.log(header);
+header = "TIME (us)\tPERIOD (us)\tDAC1 (V) \tCELL (V)\tREF (V)\tDAC0 (V)\tOUTPUT (V)\tTARGET\tVCELL (V)\tRES (ohm)\tMODE\tKP\tKI\tKD\tSENDTIME (us)";
+console.log(header)
 port.pipe(parser)
 
 //setup interval logger
@@ -64,35 +63,19 @@ function toCSV(obj)
 
 start = Date.now()
 period = 5*1000 //ms
-chunk = header+"\n"
+last_packet = undefined;
 
 parser.on('data',  function(data)
 	{
-		packet = data.trim().split("\t").map(x=>+x)
+		//map to numbers except for mode
+		packet = data.trim().split("\t")
+		mode = packet[9]
+		packet = packet.map(x=>+x)
+		packet[9] = mode  
 		packet.unshift(Date.now())
-    str = packet.toString().replace("[","").replace("]","")
+        str = packet.toString().replace("[","").replace("]","")
 
-		ts = pushpop(packet[0],ts,ll)
-		V1 = pushpop(packet[1],V1,ll)
-		V2 = pushpop(packet[2],V2,ll)
-
-		chunk += str+"\n"
-
-			if (Date.now() > (start+period))
-			{
-				// async file write
-				one = "two";
-			  //fs.writeFile("data/data_"+Date.now().toString()+".csv",chunk, (err) =>
-				// {
-		  	//  	if (err) throw err;
-				// }
-			//);
-
-		 //reset array
-		 chunk = header+"\n";
-		 start = Date.now();
-
-		}
+		last_packet = packet;
 
 		console.log(data)
 		io.emit('news',packet)
@@ -116,5 +99,27 @@ app.post('/setting/',function(req,res)
 	res.send({'success':true});
 
 })
+
+app.get('/rawdata/',function(req,res)
+{
+	res.send({'data':last_packet});
+})
+
+
+app.get('/data/',function(req,res)
+{
+	out = {}
+	temp = JSON.parse(JSON.stringify(last_packet))
+
+	out['time_utns'] = temp[0]
+	out['cell_V']  = temp[3]-temp[5]
+	out['i_A'] = (temp[2]-temp[3])/temp[9]
+	out['mode'] = temp[10]
+	out['target'] = temp[7]
+
+	res.send({'data':out});
+})
+
+
 
 server.listen(3200);
