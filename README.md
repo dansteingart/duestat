@@ -16,7 +16,7 @@ So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not
 2. There's now a few built-in 12 bit DACS! 👍
 3. Bus potential knocked down to 3.3 V 👎, but well, we can do some tricks and if we stick to half cells that should be OK until we need to do cathode work.....
 
-The initial part count of the ardustat can be knocked down, since we're not going to use an off-board DAC and we're going to avoid relays for now. With something like an adafruit M4 class board, a resistor, and some patch cable we can likely do something. So let's see how it goes.
+The initial part count of the ardustat can be knocked down, since we're not going to use an off-board DAC and we're going to avoid relays for now. With something like an [adafruit M4 class board](https://www.adafruit.com/product/3382), a resistor, and some patch cable we can likely do something. So let's see how it goes.
 
 ## Circuit Theory
 The duestat, like the ardustat before it, is closed-loop control circuit based on a simple voltage divider circuit below
@@ -96,7 +96,7 @@ This mode is set by
 ```
 {
     'mode':'gstat',
-    'target': 0.0,
+    'target': 0.000004,
     'DAC_set' : .2
 }
 ```
