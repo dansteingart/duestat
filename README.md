@@ -10,7 +10,7 @@ A long time ago I made the [ardustat](http://github.com/dansteingart/ardustat). 
 
 After I graduated and got a faculty position a few students improved the C code, but the interface and circuit design languished. I was hopeful that the nonolith CEE (now the ADALM1000) would obviate the hardware entirely. While I would gladly welcome that event, it seems to not be a priority for ADI. There have been a bunch of open source potentiostats as BS/MS projects over the last decade, but, to be honest, the part count and not-using-proto-hardware (e.g. not using arduino like things) are a turn off.
 
-So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not as accessible as it should be. But! The new era of arduinos and its successors have SAMD51 M4's for like $20, and this means
+So here we are. It's 2021 and electrochemistry at a ~1 mA current and lower is still not as accessible as it should be. But! The new era of arduinos and its successors have SAMD51 M4's for like $20, and this means
 
 1. ADC resolution has gone to 14 bits! 👍
 2. There's now a few built-in 12 bit DACS! 👍
