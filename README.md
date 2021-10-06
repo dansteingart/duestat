@@ -134,5 +134,6 @@ You now have a server going at `http://localhost:3200`. You can  send/get comman
 # FAQ
 
 _Q: Why put ADCs on the DACs? We could use those ADCs for other things._
+
 A: Because I've learned the hard way (TM) to double check what the DACs are doing, especially under load. If you need more ADCs it's really easy to add those via I2C. Fast well integrated DACs are worth their weight in gold.
 
