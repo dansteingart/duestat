@@ -19,7 +19,7 @@ So here we are. It's 2021 and electrochemistry at a ~1 mA and lower is still not
 The initial part count of the ardustat can be knocked down, since we're not going to use an off-board DAC and we're going to avoid relays for now. With something like an [adafruit M4 class board](https://www.adafruit.com/product/3382), a resistor, and some patch cable we can likely do something. So let's see how it goes.
 
 ## Circuit Theory
-The duestat, like the ardustat before it, is closed-loop control circuit based on a simple voltage divider circuit below
+The duestat, like the ardustat before it, is closed-loop control circuit based on the simple voltage divider circuit below
 
 ```
 
@@ -129,3 +129,10 @@ You'll see an insane amount of data flowing in the console. You're smart though 
 node server.js /your/duestat/port > out.tsv
 ```
 You now have a server going at `http://localhost:3200`. You can  send/get commands from the server via your favorite `REST` doer (I like python requests). See `example_scripts/example.py` for a fairly complete trial/error script.
+
+
+# FAQ
+
+_Q: Why put ADCs on the DACs? We could use those ADCs for other things._
+A: Because I've learned the hard way (TM) to double check what the DACs are doing, especially under load. If you need more ADCs it's really easy to add those via I2C. Fast well integrated DACs are worth their weight in gold.
+
