@@ -12,13 +12,10 @@ app.use('/static', express.static('static'));
 
 parts = process.argv
 
-try
-{
-		spo = parts[2]
-}
+try {spo = parts[2]}
 catch (e)
 {
-	console.log("doesn't look like a port was given, guess linux and cross fingers")
+	console.log("doesn't look like a serial port was given, guess linux and cross fingers")
 	spo = "/dev/ttyACM0";
 }
 
@@ -27,7 +24,7 @@ const Readline = require('@serialport/parser-readline')
 const port = new SerialPort(spo)
 const parser = new Readline()
 
-header = "TIME (us)\tPERIOD (us)\tDAC1 (V) \tCELL (V)\tREF (V)\tDAC0 (V)\tOUTPUT (V)\tTARGET\tVCELL (V)\tRES (ohm)\tMODE\tKP\tKI\tKD\tSENDTIME (us)";
+header = "TIME (us)\tPERIOD (us)\tDAC1 (V)\tCELL (V)\tREF (V)\tDAC0 (V)\tOUTPUT (V)\tTARGET\tVCELL (V)\tRES (ohm)\tMODE\tKP\tKI\tKD\tSENDTIME (us)";
 console.log(header)
 port.pipe(parser)
 
@@ -36,6 +33,16 @@ const ll = 200*3600 //approx xx*100 seconds of data
 var ts = []
 var V1 = []
 var V2 = []
+var fn;
+var fnj;
+var fnc;
+var logger = false;
+
+try {
+	fs.mkdirSync("data")	
+} catch (error) {
+	
+}
 
 function pushpop(value,array,length)
 {
@@ -75,8 +82,8 @@ parser.on('data',  function(data)
 		packet.unshift(Date.now())
         str = packet.toString().replace("[","").replace("]","")
 
+		if (logger) fs.appendFile("data/"+fnc,str+"\n",err=>{})
 		last_packet = packet;
-
 		console.log(data)
 		io.emit('news',packet)
 
@@ -100,9 +107,39 @@ app.post('/setting/',function(req,res)
 
 })
 
+
+app.post('/exp_start/',function(req,res)
+{
+	logger = false;
+	const exp = req.body;
+
+	now = Date.now()
+
+	if (exp.hasOwnProperty('name')) fn = exp['name']+"_"+now 
+	else fn = "experiment_"+now
+		
+	fnj = fn+".json"
+	fnc = fn+".csv"
+
+	fs.writeFile("data/"+fnj,JSON.stringify(exp)+"\n",err=>{})
+	fs.writeFile("data/"+fnc,header.replace(/\t/g,",")+"\n",err=>{})
+	logger = true;
+
+	res.send({'success':true,'logger':logger,'exp':exp['name']+"_"+now});
+
+})
+
+app.post('/exp_stop/',function(req,res)
+{
+	logger = false;
+	res.send({'success':true,});
+
+})
+
+
 app.get('/rawdata/',function(req,res)
 {
-	res.send({'data':last_packet});
+	res.send(last_packet);
 })
 
 
@@ -117,7 +154,7 @@ app.get('/data/',function(req,res)
 	out['mode'] = temp[10]
 	out['target'] = temp[7]
 
-	res.send({'data':out});
+	res.send(out);
 })
 
 

@@ -1,7 +1,7 @@
 #! python 
 ##Author: Dan Steingart
 ##Date Started: 2021-10-04
-##Notes: Simple Example Script (start, not complete)
+##Notes: CV Example Script (start, not complete)
 
 import requests as r
 from time import time, sleep
@@ -78,35 +78,16 @@ def sleepget(per):
 set_r(22000) #assuming a Rf of 22K
 set_p(.1) #control proportionality factor
 
-manual(1.5,gval=1)
-sleepget(2)
+experiment = {}
+experiment['name'] = "Dan_Test_01"
 
-pstat(1.5,gval=0)
-sleepget(2)
-
-manual(1.5,gval=1)
-sleepget(5)
-
-ocv()
-sleepget(5)
-
-gstat(.005*1e-3,gval=1)
-sleepget(5)
-
-pstat(-.5,gval=1)
-sleepget(5)
-
-gstat(0,gval=1)
-sleepget(5)
-
-gstat(.01*1e-3,gval=1)
-sleepget(5)
-
-gstat(-.01*1e-3,gval=1)
-sleepget(5)
-
-gstat(.02*1e-3,gval=1)
-sleepget(5)
-
-ocv()
-sleepget(5)
+start_exp(experiment)
+for j in range(3):
+    for i in linspace(-.5,.5,100):
+        pstat(i,gval=1.5)
+        sleep(.01)
+    
+    for i in linspace(.5,-.5,100):
+        pstat(i,gval=1.5)
+        sleep(.01)
+stop_exp()
