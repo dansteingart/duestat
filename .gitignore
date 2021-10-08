@@ -4,3 +4,5 @@ interface/out.foo
 interface/data/*.csv
 interface/data/*.json 
 interface/node_modules/*
+interface/package-lock.json
+interface/node_modules/.package-lock.json
