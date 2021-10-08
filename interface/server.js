@@ -2,7 +2,8 @@ var fs = require('fs')
 const express = require('express');
 var app = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded())
+app.use(bodyParser.urlencoded()) //deprecated not sure what to do here....
+var glob = require("glob")
 
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
@@ -28,11 +29,7 @@ header = "TIME (us)\tPERIOD (us)\tDAC1 (V)\tCELL (V)\tREF (V)\tDAC0 (V)\tOUTPUT 
 console.log(header)
 port.pipe(parser)
 
-//setup interval logger
-const ll = 200*3600 //approx xx*100 seconds of data
-var ts = []
-var V1 = []
-var V2 = []
+//setup logger
 var fn;
 var fnj;
 var fnc;
@@ -90,8 +87,6 @@ parser.on('data',  function(data)
 	}
 
 )
-
-
 
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/html/shower.html');
@@ -157,6 +152,38 @@ app.get('/data/',function(req,res)
 	res.send(out);
 })
 
+app.get('/experiments/',function(req,res)
+{
+	res.sendFile(__dirname + '/html/experiments.html');
+})
+
+app.get('/get_experiment_list/',function(req,res)
+{
+	res.send(JSON.stringify(glob.sync("data/*.json")).replace(/data\//g,"").replace(/.json/g,""))
+})
+
+app.get('/get_experiment_data/:fil?',function(req,res)
+{
+    if(req.params.fil)
+	{
+		if (req.params.fil.search(".csv") > -1) res.sendFile(__dirname + '/data/'+req.params.fil);
+		else res.send(fs.readFileSync(__dirname + '/data/'+req.params.fil+".csv"));
+	}
+	else res.send("I need something to do.")
+
+})
+
+app.get('/get_experiment_meta/:fil?',function(req,res)
+{
+    if(req.params.fil)
+	{
+		if (req.params.fil.search(".json")> -1) res.sendFile(__dirname + '/data/'+req.params.fil);
+		else res.send(fs.readFileSync(__dirname + '/data/'+req.params.fil+".json"));
+	}
+	else res.send("I need something to do.")
+})
 
 
 server.listen(3200);
+
+

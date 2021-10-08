@@ -3,3 +3,4 @@ hardware/duestat/crun.sh
 interface/out.foo
 interface/data/*.csv
 interface/data/*.json 
+interface/node_modules/*

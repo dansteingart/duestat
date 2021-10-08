@@ -6,3 +6,4 @@
 npm i express
 npm i serialport
 npm i socket.io
+npm i glob
