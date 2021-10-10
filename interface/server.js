@@ -2,7 +2,7 @@ var fs = require('fs')
 const express = require('express');
 var app = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded()) //deprecated not sure what to do here....
+app.use(bodyParser.urlencoded({extended:true})); //deprecated not sure what to do here....
 var glob = require("glob")
 
 const server = require('http').createServer(app);
@@ -12,7 +12,7 @@ io.on('connection', () => { /* … */ });
 app.use('/static', express.static('static'));
 
 parts = process.argv
-
+  
 try {spo = parts[2]}
 catch (e)
 {
@@ -20,13 +20,22 @@ catch (e)
 	spo = "/dev/ttyACM0";
 }
 
+console.log("Attempting to connect to a duestat @ "+spo)
+
+verbose = false;
+for (i in parts)
+{
+	if (parts[i] == "-v") verbose = true; 
+}
+
+
 const SerialPort = require('serialport')
 const Readline = require('@serialport/parser-readline')
 const port = new SerialPort(spo)
 const parser = new Readline()
 
 header = "TIME (us)\tPERIOD (us)\tDAC1 (V)\tCELL (V)\tREF (V)\tDAC0 (V)\tOUTPUT (V)\tTARGET\tVCELL (V)\tRES (ohm)\tMODE\tKP\tKI\tKD\tSENDTIME (us)";
-console.log(header)
+if (verbose) console.log(header)
 port.pipe(parser)
 
 //setup logger
@@ -81,7 +90,7 @@ parser.on('data',  function(data)
 
 		if (logger) fs.appendFile("data/"+fnc,str+"\n",err=>{})
 		last_packet = packet;
-		console.log(data)
+		if (verbose) console.log(data)
 		io.emit('news',packet)
 
 	}
@@ -107,7 +116,6 @@ app.post('/exp_start/',function(req,res)
 {
 	logger = false;
 	const exp = req.body;
-
 	now = Date.now()
 
 	if (exp.hasOwnProperty('name')) fn = exp['name']+"_"+now 

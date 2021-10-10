@@ -174,24 +174,8 @@ void loop() {
 
    if (mode == "pstat")
    {
-    double oldoutput = output;
-    int aa2 = analogRead(A2);
-    int aa4 = analogRead(A4);
-
-    VCell = 3.3 * (aa4 - aa2) / pow(2, 14);
-    double diff = VCell - target;
-    output = oldoutput+diff*-1*KP;
-    if (output > 3.3) output = 3.3;
-    if (output < 0) output = 0;
-
-    //AUTOPID NOT BEHAVING FOR SOME REASON 2021-10-04, pulling out
-    //myPID.run(); //call every loop, updates automatically at certain time interval
-    
-    a0 = (int)(4095 * output / 3.3);
-    if (a0 < 0) a0 = 0;
-    else if (a0 > 4090) a0 = 4090;
-    analogWrite(A0, a0);
-    }
+     pstat(target);
+   }
 
    if (mode == "pstat_3")
    {
@@ -213,7 +197,6 @@ void loop() {
     else if (a0 > 4090) a0 = 4090;
     analogWrite(A0, a0);
     }
-
 
   if (mode == "gstat")
   {
@@ -262,4 +245,22 @@ void serialEvent() {
     inputString += inChar;
     if (inChar == '\n') {stringComplete = true;}
   }
+}
+
+void pstat(double targ)
+{
+    double oldoutput = output;
+    int aa2 = analogRead(A2);
+    int aa4 = analogRead(A4);
+
+    VCell = 3.3 * (aa4 - aa2) / pow(2, 14);
+    double diff = VCell - targ;
+    output = oldoutput+diff*-1*KP;
+    if (output > 3.3) output = 3.3;
+    if (output < 0) output = 0;
+
+    a0 = (int)(4095 * output / 3.3);
+    if (a0 < 0) a0 = 0;
+    else if (a0 > 4090) a0 = 4090;
+    analogWrite(A0, a0);
 }
