@@ -4,6 +4,7 @@
 #include <AutoPID.h>
 
 StaticJsonDocument<1000> doc;
+StaticJsonDocument<1000> out;
 
 //pid settings and gains
 #define OUTPUT_MIN 0
@@ -113,35 +114,54 @@ void loop() {
     a5 = a5 / samps; //average readings
 
 
+    //old TSV print
     //send packet
-    Serial.print(last_marker);
-    //Serial.print(0);
-    Serial.print("\t");
-    Serial.print(3.3 * (a3 - 0) / pow(2, 14), 4);
-    Serial.print("\t");
-    Serial.print(3.3 * (a4 - 0) / pow(2, 14), 4);
-    Serial.print("\t");
-    Serial.print(3.3 * a5 / pow(2, 14), 4);
-    Serial.print("\t");
-    Serial.print(3.3 * a2 / pow(2, 14), 4); //GND reading
-    Serial.print("\t");
-    Serial.print(output,4);
-    Serial.print("\t");
-    Serial.print(target,12); //because we're expressing V and uA
-    Serial.print("\t");
-    Serial.print(VCell,4);
-    Serial.print("\t");
-    Serial.print(res1);
-    Serial.print("\t");
-    Serial.print(mode);
-    Serial.print("\t");
-    Serial.print(KP);
-    Serial.print("\t");
-    Serial.print(KI);
-    Serial.print("\t");
-    Serial.print(KD);
-    Serial.print("\t");
-    Serial.println(micros() - last); //time it took to send the package
+    // Serial.print(last_marker);
+    // //Serial.print(0);
+    // Serial.print("\t");
+    // Serial.print(3.3 * (a3 - 0) / pow(2, 14), 4);
+    // Serial.print("\t");
+    // Serial.print(3.3 * (a4 - 0) / pow(2, 14), 4);
+    // Serial.print("\t");
+    // Serial.print(3.3 * a5 / pow(2, 14), 4);
+    // Serial.print("\t");
+    // Serial.print(3.3 * a2 / pow(2, 14), 4); //GND reading
+    // Serial.print("\t");
+    // Serial.print(output,4);
+    // Serial.print("\t");
+    // Serial.print(target,12); //because we're expressing V and uA
+    // Serial.print("\t");
+    // Serial.print(VCell,4);
+    // Serial.print("\t");
+    // Serial.print(res1);
+    // Serial.print("\t");
+    // Serial.print(mode);
+    // Serial.print("\t");
+    // Serial.print(KP);
+    // Serial.print("\t");
+    // Serial.print(KI);
+    // Serial.print("\t");
+    // Serial.print(KD);
+    // Serial.print("\t");
+    // Serial.println(micros() - last); //time it took to send the package
+
+    //json print
+    out["samps"] = last_marker;
+    out["a3"] = 3.3 * (a3 - 0) / pow(2, 14);
+    out["a4"] = 3.3 * (a4 - 0) / pow(2, 14);
+    out["a2"] = 3.3 * (a2 - 0) / pow(2, 14);
+    out["a1"] = 3.3 * (a1 - 0) / pow(2, 14);
+    out["output"]  = output;
+    out["target"] = target;
+    out["cell"] = VCell;
+    out["mode"] = mode; 
+    out["KP"] = KP; 
+    out["KI"] = KI; 
+    out["KD"] = KD; 
+    out["ttp"] = micros() - last;
+    serializeJson(out, Serial);
+    Serial.println();
+
 
     //reset counters
     a2 = 0;
