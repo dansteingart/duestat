@@ -51,6 +51,8 @@ AutoPID myPID(&VCell, &target, &output, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
 
 void setup() {
   Serial.begin(1000000); //fast right?
+  Serial1.begin(115200);
+
   analogReadResolution(14); //set read to 14 bits
   analogWriteResolution(12); //set write to 12 bits
   last = micros();
@@ -160,7 +162,9 @@ void loop() {
     out["KD"] = KD; 
     out["ttp"] = micros() - last;
     serializeJson(out, Serial);
+    serializeJson(out, Serial1);
     Serial.println();
+    Serial1.println();
 
 
     //reset counters
@@ -264,6 +268,14 @@ void serialEvent() {
     inputString += inChar;
     if (inChar == '\n') {stringComplete = true;}
   }
+    while (Serial1.available()) {
+    // get the new byte and add it to the inputString:
+
+    char inChar = (char)Serial1.read();
+    inputString += inChar;
+    if (inChar == '\n') {stringComplete = true;}
+  }
+
 }
 
 void pstat(double targ)
