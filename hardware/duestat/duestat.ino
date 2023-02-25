@@ -110,7 +110,7 @@ void loop() {
     last_marker = micros() - last; //mark time since last send started
     last = micros();
 
-    a2 = a2 / samps; //average readingsi
+    a2 = a2 / samps; //average readings
     a3 = a3 / samps; //average readings
     a4 = a4 / samps; //average readings
     a5 = a5 / samps; //average readings
@@ -149,14 +149,15 @@ void loop() {
 
     //json print
     out["samps"] = last_marker;
+    out["a2"] = 3.3 * (a2 - 0) / pow(2, 14);
     out["a3"] = 3.3 * (a3 - 0) / pow(2, 14);
     out["a4"] = 3.3 * (a4 - 0) / pow(2, 14);
-    out["a2"] = 3.3 * (a2 - 0) / pow(2, 14);
-    out["a1"] = 3.3 * (a1 - 0) / pow(2, 14);
+    out["a5"] = 3.3 * (a5 - 0) / pow(2, 14);
     out["output"]  = output;
     out["target"] = target;
     out["cell"] = VCell;
     out["mode"] = mode; 
+    out["res1"] = res1; 
     out["KP"] = KP; 
     out["KI"] = KI; 
     out["KD"] = KD; 

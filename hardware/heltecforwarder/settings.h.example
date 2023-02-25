@@ -1,0 +1,6 @@
+const char* ssid = "YOUR SSID";
+const char* password = "YOUR PASS";
+const char* mqtt_server = "YOUR MQTT SERVER";
+const char* mqtt_send = "TOPIC_TO_SEND_ON";
+const char* mqtt_recv = "TOPIC_TO_RECV_ON";
+const char* mqtt_name = "a_name_for_your_thing";

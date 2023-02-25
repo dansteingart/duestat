@@ -6,3 +6,8 @@ interface/data/*.json
 interface/node_modules/*
 interface/package-lock.json
 interface/node_modules/.package-lock.json
+hardware/espforwarder/settings.h
+hardware/heltecforwarder/debug_custom.json
+hardware/heltecforwarder/debug.cfg
+hardware/heltecforwarder/esp32.svd
+hardware/heltecforwarder/settings.h
