@@ -11,3 +11,12 @@ hardware/heltecforwarder/debug_custom.json
 hardware/heltecforwarder/debug.cfg
 hardware/heltecforwarder/esp32.svd
 hardware/heltecforwarder/settings.h
+*.b#*
+*.s#*
+*.job
+*.pro
+*.epf
+.DS_Store
+firmware/heltecforwarder/debug.cfg
+firmware/heltecforwarder/debug_custom.json
+firmware/heltecforwarder/esp32.svd
